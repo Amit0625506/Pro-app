@@ -6,7 +6,7 @@ import yfinance as yf
 # API KEY
 # =========================
 
-API_KEY = "PASTE API KEY"
+API_KEY = "AQ.Ab8RN6JcD4LcJFIHkfk4wnv8FIpldBBf3lnaa-QotREe2zSQEw"
 
 client = genai.Client(api_key=API_KEY)
 
@@ -63,7 +63,7 @@ if option == "Nifty 50":
         """
 
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-flash-lite-latest",
             contents=prompt
         )
 
@@ -213,7 +213,7 @@ else:
         """
 
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-flash-lite-latest",
             contents=f"{system_prompt}\n\n{question}"
         )
 
