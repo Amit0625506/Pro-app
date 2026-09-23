@@ -8,7 +8,7 @@ from google import genai
 # GEMINI API
 # ---------------------
 
-API_KEY = "amit"
+API_KEY = ""
 
 client = genai.Client(api_key=API_KEY)
 
