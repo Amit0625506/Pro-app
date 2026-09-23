@@ -1,173 +1,104 @@
 import streamlit as st
-import yfinance as yf
-import pandas as pd
-import plotly.graph_objects as go
 from google import genai
+import yfinance as yf
 
-# ---------------------
-# GEMINI API
-# ---------------------
+# =========================
+# API KEY
+# =========================
 
-API_KEY = ""
+API_KEY = "PASTE API KEY"
 
 client = genai.Client(api_key=API_KEY)
 
-# ---------------------
-# PAGE CONFIG
-# ---------------------
+# =========================
+# PAGE
+# =========================
 
 st.set_page_config(
-    page_title="TradeMaster Pro",
-    page_icon="📈",
+    page_title="Indian Stock Market AI",
     layout="wide"
 )
 
-st.title("📈 TradeMaster Pro")
-st.subheader("Nifty | IPO | SIP | EMI | Intraday Trading Assistant")
+st.title("📈 Indian Stock Market AI Assistant")
 
-# ---------------------
+# =========================
 # SIDEBAR
-# ---------------------
+# =========================
 
-menu = st.sidebar.selectbox(
-    "Choose Feature",
+option = st.sidebar.selectbox(
+    "Select Feature",
     [
-        "Nifty Dashboard",
-        "Intraday Analysis",
-        "Candlestick Analysis",
+        "Market Chat",
+        "Nifty 50",
+        "Bank Nifty",
         "IPO Analysis",
         "SIP Calculator",
-        "EMI Calculator",
-        "AI Trading Chat"
+        "EMI Calculator"
     ]
 )
 
-# ---------------------
-# NIFTY DASHBOARD
-# ---------------------
+# =========================
+# NIFTY
+# =========================
 
-if menu == "Nifty Dashboard":
+if option == "Nifty 50":
 
-    st.header("Nifty 50 Dashboard")
+    st.header("Nifty 50")
 
-    ticker = "^NSEI"
+    data = yf.download("^NSEI", period="1mo")
 
-    data = yf.download(
-        ticker,
-        period="1mo",
-        interval="1d"
-    )
+    st.line_chart(data["Close"])
 
-    st.write(data.tail())
+    if st.button("Analyze Nifty"):
 
-    fig = go.Figure()
+        prompt = """
+        Analyze Nifty 50.
 
-    fig.add_trace(
-        go.Candlestick(
-            x=data.index,
-            open=data["Open"],
-            high=data["High"],
-            low=data["Low"],
-            close=data["Close"]
-        )
-    )
-
-    st.plotly_chart(fig, use_container_width=True)
-
-    last_close = data["Close"].iloc[-1]
-    prev_close = data["Close"].iloc[-2]
-
-    if last_close > prev_close:
-        st.success("Bullish Trend")
-    else:
-        st.error("Bearish Trend")
-
-# ---------------------
-# INTRADAY ANALYSIS
-# ---------------------
-
-elif menu == "Intraday Analysis":
-
-    st.header("Intraday Trading Analysis")
-
-    index_name = st.selectbox(
-        "Select Index",
-        [
-            "NIFTY",
-            "BANKNIFTY"
-        ]
-    )
-
-    query = f"""
-    Analyze {index_name}.
-
-    Provide:
-    1. Overall Trend
-    2. Bullish or Bearish
-    3. Key Support
-    4. Key Resistance
-    5. Intraday Strategy
-    6. Risk Management
-    7. Important Levels
-    """
-
-    if st.button("Generate Analysis"):
+        Give:
+        1. Trend
+        2. Support
+        3. Resistance
+        4. Intraday View
+        5. Risk Management
+        """
 
         response = client.models.generate_content(
-            model="gemini-flash-lite-latest",
-            contents=query
+            model="gemini-2.5-flash",
+            contents=prompt
         )
 
         st.write(response.text)
 
-# ---------------------
-# CANDLESTICK ANALYSIS
-# ---------------------
+# =========================
+# BANK NIFTY
+# =========================
 
-elif menu == "Candlestick Analysis":
+elif option == "Bank Nifty":
 
-    st.header("Candlestick Pattern Analysis")
+    st.header("Bank Nifty")
 
-    pattern = st.selectbox(
-        "Select Pattern",
-        [
-            "Hammer",
-            "Shooting Star",
-            "Doji",
-            "Bullish Engulfing",
-            "Bearish Engulfing",
-            "Morning Star",
-            "Evening Star"
-        ]
-    )
+    data = yf.download("^NSEBANK", period="1mo")
 
-    query = f"""
-    Analyze candlestick pattern {pattern}
+    st.line_chart(data["Close"])
 
-    Explain:
-    Trend
-    Reliability
-    Entry
-    Stoploss
-    Target
-    """
-
-    if st.button("Analyze Pattern"):
+    if st.button("Analyze Bank Nifty"):
 
         response = client.models.generate_content(
-            model="gemini-flash-lite-latest",
-            contents=query
+            model="gemini-2.5-flash",
+            contents="""
+            Analyze Bank Nifty.
+            Give trading opportunities.
+            Explain trend and risk.
+            """
         )
 
         st.write(response.text)
 
-# ---------------------
+# =========================
 # IPO
-# ---------------------
+# =========================
 
-elif menu == "IPO Analysis":
-
-    st.header("IPO Analysis")
+elif option == "IPO Analysis":
 
     ipo = st.text_input("IPO Name")
 
@@ -176,7 +107,8 @@ elif menu == "IPO Analysis":
         prompt = f"""
         Analyze IPO {ipo}
 
-        Cover:
+        Include:
+
         Company Overview
         Strengths
         Risks
@@ -185,56 +117,41 @@ elif menu == "IPO Analysis":
         """
 
         response = client.models.generate_content(
-            model="gemini-flash-lite-latest",
+            model="gemini-2.5-flash",
             contents=prompt
         )
 
         st.write(response.text)
 
-# ---------------------
-# SIP CALCULATOR
-# ---------------------
+# =========================
+# SIP
+# =========================
 
-elif menu == "SIP Calculator":
+elif option == "SIP Calculator":
 
-    st.header("SIP Calculator")
+    amount = st.number_input("Monthly SIP", 500, 1000000, 5000)
 
-    amount = st.number_input(
-        "Monthly SIP",
-        value=5000
-    )
+    years = st.number_input("Years", 1, 40, 10)
 
-    years = st.number_input(
-        "Years",
-        value=10
-    )
-
-    rate = st.number_input(
-        "Expected Return (%)",
-        value=12.0
-    )
+    rate = st.number_input("Expected Return %", 1.0, 30.0, 12.0)
 
     if st.button("Calculate SIP"):
 
-        monthly_rate = rate/12/100
-        months = years*12
+        monthly_rate = rate / 12 / 100
+        months = years * 12
 
         corpus = amount * (
-            ((1+monthly_rate)**months - 1)
+            ((1 + monthly_rate) ** months - 1)
             / monthly_rate
-        ) * (1+monthly_rate)
+        ) * (1 + monthly_rate)
 
-        st.success(
-            f"Estimated Corpus: ₹{corpus:,.2f}"
-        )
+        st.success(f"Estimated Value = ₹{corpus:,.2f}")
 
-# ---------------------
-# EMI CALCULATOR
-# ---------------------
+# =========================
+# EMI
+# =========================
 
-elif menu == "EMI Calculator":
-
-    st.header("EMI Calculator")
+elif option == "EMI Calculator":
 
     principal = st.number_input(
         "Loan Amount",
@@ -242,45 +159,62 @@ elif menu == "EMI Calculator":
     )
 
     rate = st.number_input(
-        "Interest Rate (%)",
-        value=8.5
+        "Interest Rate %",
+        value=9.0
     )
 
     years = st.number_input(
-        "Loan Tenure",
+        "Years",
         value=20
     )
 
     if st.button("Calculate EMI"):
 
-        r = rate/12/100
-        n = years*12
+        r = rate / 12 / 100
+        n = years * 12
 
         emi = principal * r * (1+r)**n / (
             (1+r)**n - 1
         )
 
         st.success(
-            f"Monthly EMI: ₹{emi:,.2f}"
+            f"Monthly EMI = ₹{emi:,.2f}"
         )
 
-# ---------------------
-# AI CHAT
-# ---------------------
+# =========================
+# CHATBOT
+# =========================
 
-elif menu == "AI Trading Chat":
+else:
 
-    st.header("AI Trading Assistant")
-
-    user_query = st.text_area(
-        "Ask about Nifty, BankNifty, Options, IPO, SIP"
+    question = st.text_area(
+        "Ask about Stocks, IPO, SIP, Trading, Options"
     )
 
     if st.button("Ask AI"):
 
+        system_prompt = """
+        You are an Indian Stock Market Expert.
+
+        Expertise:
+        - Nifty 50
+        - Bank Nifty
+        - FinNifty
+        - Sensex
+        - IPO
+        - SIP
+        - Mutual Funds
+        - Options Trading
+        - Technical Analysis
+        - Candlestick Patterns
+
+        Never promise profits.
+        Always explain risks.
+        """
+
         response = client.models.generate_content(
-            model="gemini-flash-lite-latest",
-            contents=user_query
+            model="gemini-2.5-flash",
+            contents=f"{system_prompt}\n\n{question}"
         )
 
         st.write(response.text)
